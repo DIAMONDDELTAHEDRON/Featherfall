@@ -18,7 +18,11 @@ local Featherfall = {
     platforming = false,
     floortex_projection_layers = {},
     action_ui = nil,
-    dynamic_platforms = {},
+    dynamic_platforms = {
+        block = nil,
+        floor = nil,
+        rideable = nil,
+    },
     petalwings = {},
     action_colors = {},
     action_gradients = {},
@@ -211,7 +215,11 @@ function Featherfall:resetControllerState()
     self.platform_hitstop = 0
     self.platform_hitstop_pending = 0
     self.camera_restore_pending = false
-    self.dynamic_platforms = {}
+    self.dynamic_platforms = {
+        block = nil,
+        floor = nil,
+        rideable = nil,
+    }
     self:resetPlatformCamera()
     self:clearPetalWings(true)
     if self.action_ui and self.action_ui.parent then
@@ -687,12 +695,14 @@ end
 
 function Featherfall:getDynamicPlatforms()
     local platforms = {}
-    for index = #(self.dynamic_platforms or {}), 1, -1 do
-        local platform = self.dynamic_platforms[index]
-        if platform and platform.parent then
-            table.insert(platforms, 1, platform)
-        else
-            table.remove(self.dynamic_platforms, index)
+    for _, group in pairs(self.dynamic_platforms) do
+        for index = #(group or {}), 1, -1 do
+            local platform = group[index]
+            if platform and platform.parent then
+                table.insert(platforms, 1, platform)
+            else
+                table.remove(group, index)
+            end
         end
     end
     return platforms

@@ -415,32 +415,41 @@ function PlatformEntity:resolveHorizontalBlocks(move_amount)
         return
     end
 
-    local checks = math.ceil(math.abs(move_amount or self.hspeed or 0))
-    local distcheck = 2
+    -- TODO: This seems like the source of all the lag.
+    -- I'm not convinced it even needs to do all these checks
+    local checks = math.ceil(math.abs(move_amount or self.hspeed or 0) / self.owner.width)
+    local distcheck = 1
+    local max_dist = (move_amount or self.hspeed or 0)
     for _ = 1, checks do
-        local wall = self:findBlockAt(self.owner.x - distcheck, self.owner.y)
-        if wall and self.hspeed <= 0 then
-            if self.hspeed < 0 then
-                self.wallhitspd = self.hspeed
-                self.hspeed = 0
-            end
-            local left = self:getWorldBoundsAt(self.owner.x, self.owner.y)
-            if self.owner.x > self:getEventRight(wall) then
-                self.owner.x = self:getEventRight(wall) + (MathUtils.round(self.owner.x) - left) + 2
-                Object.uncache(self.owner)
+        if self.hspeed <= 0 then
+            local wall = self:findBlockAt(self.owner.x - math.max(distcheck * self.owner.width, max_dist), self.owner.y)
+            if wall then
+                print(self.owner.x - distcheck)
+                if self.hspeed < 0 then
+                    self.wallhitspd = self.hspeed
+                    self.hspeed = 0
+                end
+                local left = self:getWorldBoundsAt(self.owner.x, self.owner.y)
+                if self.owner.x > self:getEventRight(wall) then
+                    self.owner.x = self:getEventRight(wall) + (MathUtils.round(self.owner.x) - left) + 2
+                    Object.uncache(self.owner)
+                end
             end
         end
 
-        wall = self:findBlockAt(self.owner.x + distcheck, self.owner.y)
-        if wall and self.hspeed >= 0 then
-            if self.hspeed > 0 then
-                self.wallhitspd = self.hspeed
-                self.hspeed = 0
-            end
-            local _, _, _, _, right = self:getWorldBoundsAt(self.owner.x, self.owner.y)
-            if self.owner.x < self:getEventLeft(wall) then
-                self.owner.x = self:getEventLeft(wall) - (right - MathUtils.round(self.owner.x)) - 2
-                Object.uncache(self.owner)
+        if self.hspeed >= 0 then
+            wall = self:findBlockAt(self.owner.x + math.min(distcheck * self.owner.width, max_dist), self.owner.y)
+            if wall then
+                print(self.owner.x + distcheck)
+                if self.hspeed > 0 then
+                    self.wallhitspd = self.hspeed
+                    self.hspeed = 0
+                end
+                local _, _, _, _, right = self:getWorldBoundsAt(self.owner.x, self.owner.y)
+                if self.owner.x < self:getEventLeft(wall) then
+                    self.owner.x = self:getEventLeft(wall) - (right - MathUtils.round(self.owner.x)) - 2
+                    Object.uncache(self.owner)
+                end
             end
         end
 
