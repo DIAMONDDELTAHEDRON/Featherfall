@@ -422,7 +422,6 @@ function PlatformEntity:resolveHorizontalBlocks(move_amount)
         if self.hspeed <= 0 then
             local wall = self:findBlockAt(self.owner.x - math.max(distcheck * self.owner.width, max_dist), self.owner.y)
             if wall then
-                print(self.owner.x - distcheck)
                 if self.hspeed < 0 then
                     self.wallhitspd = self.hspeed
                     self.hspeed = 0
@@ -438,7 +437,6 @@ function PlatformEntity:resolveHorizontalBlocks(move_amount)
         if self.hspeed >= 0 then
             wall = self:findBlockAt(self.owner.x + math.min(distcheck * self.owner.width, max_dist), self.owner.y)
             if wall then
-                print(self.owner.x + distcheck)
                 if self.hspeed > 0 then
                     self.wallhitspd = self.hspeed
                     self.hspeed = 0
