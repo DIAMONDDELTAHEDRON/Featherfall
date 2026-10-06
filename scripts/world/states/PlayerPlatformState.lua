@@ -562,6 +562,7 @@ function PlayerPlatformState:startDashing()
             self.entity:landOn(ground)
         else
             self.entity.grounded = true
+			self.jump_boost = false
         end
         self.entity.jump_time = 0
     end
