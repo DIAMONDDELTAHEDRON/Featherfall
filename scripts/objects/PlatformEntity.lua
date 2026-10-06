@@ -415,32 +415,37 @@ function PlatformEntity:resolveHorizontalBlocks(move_amount)
         return
     end
 
-    local checks = math.ceil(math.abs(move_amount or self.hspeed or 0))
-    local distcheck = 2
+    local checks = math.ceil(math.abs(move_amount or self.hspeed or 0) / self.owner.width)
+    local distcheck = 1
+    local max_dist = (move_amount or self.hspeed or 0)
     for _ = 1, checks do
-        local wall = self:findBlockAt(self.owner.x - distcheck, self.owner.y)
-        if wall and self.hspeed <= 0 then
-            if self.hspeed < 0 then
-                self.wallhitspd = self.hspeed
-                self.hspeed = 0
-            end
-            local left = self:getWorldBoundsAt(self.owner.x, self.owner.y)
-            if self.owner.x > self:getEventRight(wall) then
-                self.owner.x = self:getEventRight(wall) + (MathUtils.round(self.owner.x) - left) + 2
-                Object.uncache(self.owner)
+        if self.hspeed <= 0 then
+            local wall = self:findBlockAt(self.owner.x - math.max(distcheck * self.owner.width, max_dist), self.owner.y)
+            if wall then
+                if self.hspeed < 0 then
+                    self.wallhitspd = self.hspeed
+                    self.hspeed = 0
+                end
+                local left = self:getWorldBoundsAt(self.owner.x, self.owner.y)
+                if self.owner.x > self:getEventRight(wall) then
+                    self.owner.x = self:getEventRight(wall) + (MathUtils.round(self.owner.x) - left) + 2
+                    Object.uncache(self.owner)
+                end
             end
         end
 
-        wall = self:findBlockAt(self.owner.x + distcheck, self.owner.y)
-        if wall and self.hspeed >= 0 then
-            if self.hspeed > 0 then
-                self.wallhitspd = self.hspeed
-                self.hspeed = 0
-            end
-            local _, _, _, _, right = self:getWorldBoundsAt(self.owner.x, self.owner.y)
-            if self.owner.x < self:getEventLeft(wall) then
-                self.owner.x = self:getEventLeft(wall) - (right - MathUtils.round(self.owner.x)) - 2
-                Object.uncache(self.owner)
+        if self.hspeed >= 0 then
+            wall = self:findBlockAt(self.owner.x + math.min(distcheck * self.owner.width, max_dist), self.owner.y)
+            if wall then
+                if self.hspeed > 0 then
+                    self.wallhitspd = self.hspeed
+                    self.hspeed = 0
+                end
+                local _, _, _, _, right = self:getWorldBoundsAt(self.owner.x, self.owner.y)
+                if self.owner.x < self:getEventLeft(wall) then
+                    self.owner.x = self:getEventLeft(wall) - (right - MathUtils.round(self.owner.x)) - 2
+                    Object.uncache(self.owner)
+                end
             end
         end
 
@@ -467,6 +472,7 @@ end
 
 function PlatformEntity:landOn(ground)
     self.grounded = true
+    self.jump_boost = false
     self.ground = ground
     self.grounded_lastX = self.owner.x
     self.landspd = self.vspeed
@@ -761,7 +767,8 @@ function PlatformEntity:updateJumpInput(press_jump, key_jump, options)
     if self.jumping ~= 0 then
         self.jump_time = self.jump_time + DTMULT
     end
-    if not key_jump and self.jumping == 1 and self.jump_time >= (constants.jump_mintime or 4) and self.vspeed < 0 then
+    -- TODO: prevent this off of a slashpusher launch
+    if not key_jump and self.jumping == 1 and self.jump_time >= (constants.jump_mintime or 4) and self.vspeed < 0 and not self.jump_boost then
         self.vspeed = self.vspeed * (0.5 ^ DTMULT)
     end
 end
